@@ -26,6 +26,7 @@ def parse_args():
     parser.add_argument("--sample-seed", type=int, default=20230719)
     parser.add_argument("--use-sampled", action='store_false')
     parser.add_argument("--sampled-root", type=str, default='tiny_lvlm_datasets')
+    parser.add_argument('--quant_args',type=str,default=None)
 
     # result_path
     parser.add_argument("--answer_path", type=str, default="./tiny_answers")
@@ -45,6 +46,13 @@ def main(args):
     model = get_model(args.model_name, device=torch.device('cuda'))
     time = datetime.datetime.now().strftime("%Y%m%d%H%M%S")
     answer_path = f"{args.answer_path}/{args.model_name}"
+    
+    if args.quant_args:
+        from quantize_linear import load_quant
+        quant_args = {k: v for k, v in [x.split('=') for x in args.quant_args.replace('"', '').split(',')]}
+        print(f'[Quant Args] {quant_args}')
+        model.model = load_quant(model.model, **quant_args)
+    
 
     result = {}
     dataset_names = args.dataset_names.split(',') if args.dataset_names is not None else list(dataset_class_dict.keys())
