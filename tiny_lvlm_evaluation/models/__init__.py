@@ -56,6 +56,9 @@ def get_model(model_name, device=None):
     elif model_name == 'LLaVA':
         from .test_llava import TestLLaVA
         return TestLLaVA(device)
+    elif model_name == 'LLaVA-v1.5':
+        from .test_llava_v15 import TestLLaVA
+        return TestLLaVA(device)
     elif model_name == 'LLaMA-Adapter-v2':
         from .test_llama_adapter_v2 import TestLLamaAdapterV2
         return TestLLamaAdapterV2(device)
