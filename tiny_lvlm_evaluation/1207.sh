@@ -23,7 +23,7 @@ python eval_tiny.py \
     --answer_path ./answer/llava-v1.5-7b \
     --use-sampled \
     --sample-seed 0 \
-    --sample-num 5000 
+    --sample-num -1
     
 python eval_tiny.py \
     --model-name LLaVA-v1.5 \
@@ -33,52 +33,52 @@ python eval_tiny.py \
     --answer_path ./answer/llava-v1.5-7b \
     --use-sampled \
     --sample-seed 0 \
-    --sample-num 5000 
+    --sample-num -1 
 
 
 
 python eval_tiny.py \
     --model-name LLaVA-v1.5 \
-    --device 1 \
+    --device 0 \
     --batch-size 1 \
     --dataset-names TextVQA \
-    --answer_path ./answer/llava-v1.5-7b-text \
+    --answer_path ./answer/llava-v1.5-7b-text-new \
     --use-sampled \
     --sample-seed 0 \
-    --sample-num 5000 \
+    --sample-num -1 \
     --quant_args w_bits=16,a_bits=4,act_quant_func="lut.text",act_token_split=0
 
 python eval_tiny.py \
     --model-name LLaVA-v1.5 \
-    --device 2 \
+    --device 0 \
     --batch-size 1 \
     --dataset-names TextVQA \
-    --answer_path ./answer/llava-v1.5-7b-vision \
+    --answer_path ./answer/llava-v1.5-7b-vision-new \
     --use-sampled \
     --sample-seed 0 \
-    --sample-num 5000 \
+    --sample-num -1 \
     --quant_args w_bits=16,a_bits=4,act_quant_func="lut.vision",act_token_split=0
 
 python eval_tiny.py \
     --model-name LLaVA-v1.5 \
-    --device 3 \
+    --device 0 \
     --batch-size 1 \
     --dataset-names TextVQA \
-    --answer_path ./answer/llava-v1.5-7b-vision \
+    --answer_path ./answer/llava-v1.5-7b-split-new \
     --use-sampled \
     --sample-seed 0 \
-    --sample-num 5000 \
+    --sample-num -1 \
     --quant_args w_bits=16,a_bits=4,act_quant_func="lut",act_token_split=1
 
 
 python eval_tiny.py \
     --model-name LLaVA-v1.5 \
-    --device 4 \
+    --device 0 \
     --batch-size 1 \
     --dataset-names TextVQA \
-    --answer_path ./answer/llava-v1.5-7b-hybrid \
+    --answer_path ./answer/llava-v1.5-7b-hybrid-new \
     --use-sampled \
     --sample-seed 0 \
-    --sample-num 5000 \
+    --sample-num -1 \
     --quant_args w_bits=16,a_bits=4,act_quant_func="lut.hybrid",act_token_split=0
 

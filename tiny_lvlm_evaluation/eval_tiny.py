@@ -10,6 +10,7 @@ from models import get_model
 from utils import dataset_task_dict
 from task_datasets import dataset_class_dict, GeneralDataset
 from sample_dataset import sample_dataset
+from transformers import set_seed
 
 
 def parse_args():
@@ -24,6 +25,7 @@ def parse_args():
     parser.add_argument("--dataset-names", type=str, default=None)
     parser.add_argument("--sample-num", type=int, default=50)
     parser.add_argument("--sample-seed", type=int, default=20230719)
+    parser.add_argument("--seed", type=int, default=0)
     parser.add_argument("--use-sampled", action='store_false')
     parser.add_argument("--sampled-root", type=str, default='tiny_lvlm_datasets')
     parser.add_argument('--quant_args',type=str,default=None)
@@ -42,6 +44,7 @@ def eval_sample_dataset(dataset, dataset_name, max_sample_num=50, seed=0):
 
 
 def main(args):
+    set_seed(args.seed)
     os.environ['CUDA_VISIBLE_DEVICES'] = str(args.device)
     model = get_model(args.model_name, device=torch.device('cuda'))
     time = datetime.datetime.now().strftime("%Y%m%d%H%M%S")
