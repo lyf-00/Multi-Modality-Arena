@@ -10,7 +10,7 @@ import numpy as np
 from utils import evaluate_OCR, evaluate_VQA, evaluate_Caption, evaluate_KIE, evaluate_MRR, evaluate_embodied, evaluate_zero_shot_image_classification
 from task_datasets import ocrDataset, dataset_class_dict
 from models import get_model
-
+from transformers import set_seed
 
 def parse_args():
     parser = argparse.ArgumentParser(description="Demo")
@@ -40,6 +40,8 @@ def parse_args():
     parser.add_argument("--eval_embod", action="store_true", default=False, help="Whether to evaluate on embodied.")
     parser.add_argument("--eval_cls", action="store_true", default=False, help="Whether to evaluate on zero-shot classification.")
 
+    parser.add_argument('--seed', type=int, default=0)
+    parser.add_argument('--quant_args',type=str,default=None)
     args = parser.parse_args()
     return args
 
@@ -84,10 +86,17 @@ def get_eval_function(args):
 
 def main(args):
     os.environ['CUDA_VISIBLE_DEVICES'] = str(args.device)
+    set_seed(args.seed)
     model = get_model(args.model_name, device=torch.device('cuda'))
+    if args.quant_args:
+        from quantize_linear import load_quant
+        quant_args = {k: v for k, v in [x.split('=') for x in args.quant_args.replace('"', '').split(',')]}
+        print(f'[Quant Args] {quant_args}')
+        model.model = load_quant(model.model, **quant_args)
+        
     time = datetime.datetime.now().strftime("%Y%m%d%H%M%S")
     answer_path = f"{args.answer_path}/{args.model_name}"
-
+    
     result = {}
     if args.eval_ocr:
         ocr_dataset_name = args.ocr_dataset_name.split()

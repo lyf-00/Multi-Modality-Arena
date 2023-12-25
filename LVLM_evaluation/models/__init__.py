@@ -12,6 +12,7 @@ torch.nn.init.normal_ = skip
 
 
 def get_image(image):
+    # print(image)
     if type(image) is str:
         try:
             return Image.open(image).convert("RGB")
@@ -19,6 +20,9 @@ def get_image(image):
             print(f"Fail to read image: {image}")
             exit(-1)
     elif type(image) is Image.Image:
+        return image
+    elif type(image) is np.ndarray:
+        image = Image.fromarray(image.astype('uint8')).convert('RGB')
         return image
     else:
         raise NotImplementedError(f"Invalid type of Image: {type(image)}")
@@ -31,7 +35,7 @@ def get_BGR_image(image):
     return image
 
 
-def get_model(model_name):
+def get_model(model_name, device):
     if model_name == 'BLIP2':
         from .test_blip2 import TestBlip2
         return TestBlip2()
@@ -46,7 +50,7 @@ def get_model(model_name):
         return TestLLaVA()
     elif model_name == 'LLaVA-v1.5':
         from .test_llava_v15 import TestLLaVA
-        return TestLLaVA()
+        return TestLLaVA(device)
     elif model_name == 'MiniGPT-4':
         from .test_minigpt4 import TestMiniGPT4
         return TestMiniGPT4()

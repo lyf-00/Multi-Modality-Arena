@@ -67,71 +67,6 @@ def get_conv(model_name):
     return conv_templates[template_name].copy()
 
 
-def load_model(model_path, model_name, dtype=torch.float16, device='cpu'):
-    # get tokenizer and model
-    if 'llava-v1.5-7b' in model_path:
-        tokenizer = AutoTokenizer.from_pretrained(model_path,use_fast=False) 
-        # from .llava_v1_5.builder import  load_pretrained_model as load_model
-    else:
-        tokenizer = AutoTokenizer.from_pretrained(model_path)
-    if 'llava' in model_name.lower():
-        if 'mpt' in model_name.lower():
-            model = LlavaMPTForCausalLM.from_pretrained(model_path, torch_dtype=dtype, low_cpu_mem_usage=True)
-        else:
-            model = LlavaLlamaForCausalLM.from_pretrained(model_path, torch_dtype=dtype, low_cpu_mem_usage=True)
-    elif 'mpt' in model_name.lower():
-        model = AutoModelForCausalLM.from_pretrained(model_path, torch_dtype=dtype, low_cpu_mem_usage=True, trust_remote_code=True)
-    else:
-        model = AutoModelForCausalLM.from_pretrained(model_path, torch_dtype=dtype, low_cpu_mem_usage=True)
-
-    # get image processor
-    image_processor = None
-    if 'llava' in model_name.lower():
-        if '1.5' in model_name.lower():
-            mm_use_im_start_end = getattr(model.config, "mm_use_im_start_end", False)
-            mm_use_im_patch_token = getattr(model.config, "mm_use_im_patch_token", True)
-            if mm_use_im_patch_token:
-                tokenizer.add_tokens([DEFAULT_IMAGE_PATCH_TOKEN], special_tokens=True)
-            if mm_use_im_start_end:
-                tokenizer.add_tokens([DEFAULT_IM_START_TOKEN, DEFAULT_IM_END_TOKEN], special_tokens=True)
-            model.resize_token_embeddings(len(tokenizer))
-
-            vision_tower = model.get_model().get_vision_tower()
-            if not vision_tower.is_loaded:
-                vision_tower.load_model()
-            vision_tower.to(device=device, dtype=torch.float16)
-            image_processor = vision_tower.image_processor
-        else:
-            image_processor = CLIPImageProcessor.from_pretrained(model.config.mm_vision_tower, torch_dtype=dtype)
-
-            mm_use_im_start_end = getattr(model.config, "mm_use_im_start_end", False)
-            tokenizer.add_tokens([DEFAULT_IMAGE_PATCH_TOKEN], special_tokens=True)
-            if mm_use_im_start_end:
-                tokenizer.add_tokens([DEFAULT_IM_START_TOKEN, DEFAULT_IM_END_TOKEN], special_tokens=True)
-
-            vision_tower = model.get_model().vision_tower[0]
-            if vision_tower.device.type == 'meta':
-                vision_tower = CLIPVisionModel.from_pretrained(vision_tower.config._name_or_path, torch_dtype=dtype, low_cpu_mem_usage=True).to(device=device)
-                model.get_model().vision_tower[0] = vision_tower
-            else:
-                vision_tower.to(device=device, dtype=dtype)
-            
-            vision_config = vision_tower.config
-            vision_config.im_patch_token = tokenizer.convert_tokens_to_ids([DEFAULT_IMAGE_PATCH_TOKEN])[0]
-            vision_config.use_im_start_end = mm_use_im_start_end
-            if mm_use_im_start_end:
-                vision_config.im_start_token, vision_config.im_end_token = tokenizer.convert_tokens_to_ids([DEFAULT_IM_START_TOKEN, DEFAULT_IM_END_TOKEN])
-
-    if hasattr(model.config, "max_sequence_length"):
-        context_len = model.config.max_sequence_length
-    else:
-        context_len = 2048
-
-    model.to(device=device)
-
-    return tokenizer, model, image_processor, context_len
-
-
 class TestLLaVA:
     def __init__(self, device=None):
         # model_path="liuhaotian/LLaVA-Lightning-MPT-7B-preview"
@@ -221,7 +156,8 @@ class TestLLaVA:
             image_tensor = process_images([image], self.image_processor, self.model.config)[0]
 
             input_ids = tokenizer_image_token(prompt, self.tokenizer, IMAGE_TOKEN_INDEX, return_tensors='pt')
-
+            self.model.img_token_start = list(input_ids).index(IMAGE_TOKEN_INDEX)
+            
             # return input_ids, image_tensor
             # get input_ids, image_tensor
             stop_str = conv.sep if conv.sep_style != SeparatorStyle.TWO else conv.sep2
